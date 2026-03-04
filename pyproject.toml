@@ -1,0 +1,18 @@
+[project]
+name = "agentic-data-healer"
+version = "0.1.0"
+description = "Self-healing data pipeline using Pydantic-AI and Polars"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic-ai[groq]",  # Core agent framework with Groq support
+    "polars",             # High-performance data engine
+    "logfire",            # AI Observability
+    "python-dotenv",      # Environment variable management
+    "httpx",              # Async API calls
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
