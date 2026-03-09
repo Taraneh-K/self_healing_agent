@@ -1,90 +1,43 @@
 """
-File: agent.py
-Description: Pydantic-AI Agent configuration for data healing.
-Uses a Sense-Think-Act loop with a validation tool to ensure code accuracy.
+Agent Module for Data Repair
+----------------------------
+This module utilizes the PydanticAI Agent to interpret structural irregularities
+in raw data and generate robust regex-based normalization rules.
 """
+import os
 from dotenv import load_dotenv
-from pydantic_ai import Agent, RunContext
-import polars as pl
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent
 
+# Load environment variables
 load_dotenv()
 
-@dataclass
-class AgentDeps:
-    column_name: str
-    sample_values: list[str]
+# Ensure API Key is present
+if not os.getenv("GROQ_API_KEY"):
+    raise EnvironmentError("GROQ_API_KEY is not set in your .env file.")
 
-# --- TOOLS ---
-
-def test_polars_expression(ctx: RunContext[AgentDeps], expression: str) -> str:
+class DataRepair(BaseModel):
     """
-    Validation tool that executes the AI's suggested Polars expression 
-    against the identified broken samples. Returns a detailed failure 
-    report if nulls are created in 'Healable' columns.
+    Defines the structured output for the repair agent.
+    The agent must return an instance of this model for every repair request.
     """
-    try:
-        # Create a test series from the sample values provided in dependencies
-        test_series = pl.Series("test_col", ctx.deps.sample_values)
-        
-        # Replace the AI's guessed column name with our internal 'test_col'
-        clean_expr_str = expression.replace(ctx.deps.column_name, "test_col")
-        
-        # Evaluate the string as a Polars expression
-        test_expr = eval(clean_expr_str, {"pl": pl})
-        
-        # Apply the expression to a temporary DataFrame
-        result = test_series.to_frame().with_columns(test_expr)
-        
-        # Identify how many values failed to convert (became null)
-        null_count = result.select(pl.all().is_null().sum()).to_series()[0]
-        
-        if null_count > 0:
-            return (f"FAILURE: {null_count}/{len(ctx.deps.sample_values)} rows became null. "
-                    "This means your format string or regex is likely incorrect. "
-                    "Try using pl.coalesce to handle multiple formats.")
-            
-        return "SUCCESS: All samples transformed correctly."
-    except Exception as e:
-        return f"FAILURE: Python error during execution: {str(e)}"
+    explanation: str = Field(description="Description of the detected format (e.g., 'US Date' or 'EU Currency').")
+    # repairs: Dict[str, str] = Field(description="Mapping of every unique sample to its fixed version.The normalized string. Dates MUST be 'YYYY-MM-DD'. Numbers MUST be '1234.56'.")
+    regex_pattern: str = Field(description="Regex with capture groups () to extract relevant data components.")
+    replacement_format: str = Field(description="The template string. Dates MUST be 'YYYY-MM-DD'. Numbers MUST be '1234.56'.")
 
-# --- AGENT CONFIGURATION ---
 
-data_fix_agent = Agent(
+# Agent configured as a Data Normalizer
+data_repair_agent = Agent(
     'groq:llama-3.3-70b-versatile',
-    deps_type=AgentDeps,
-    output_type=str,  # Set to str to handle potential LLM conversational noise
-    retries=3,
+    output_type=DataRepair,
     system_prompt=(
-        "You are an elite Data Engineering Agent specializing in Polars."
-        "\n\n--- YOUR OBJECTIVE ---"
-        "Generate a Polars expression that repairs data types for a specific column. "
-        "Use the 'test_polars_expression' tool to verify your code before providing a final answer."
-        "Return ONLY a JSON object. No conversation. No markdown blocks."
-        "Required Keys:"
-        "- explanation: Max 10 words."
-        "- python_code: A single Polars expression using pl.col()."
-
-        "Example: {'explanation': 'Cleaned currency', 'python_code': \"pl.col('cost').str.replace('$', '')\"}"
-
-        "\n\n--- STRATEGY BY INTENT ---"
-        "1. NUMERIC SAFE-CAST: Goal is to convert to Float64. Use .cast(pl.Float64, strict=False). "
-        "   If the samples contain currency symbols ($, €) or text (e.g. 'Price: '), "
-        "   use .str.replace or .str.strip_chars first. Unfixable text should become null."
-        
-        "2. HIGH-EFFORT HEALING (Dates): Goal is to avoid nulls at all costs. "
-        "   Mixed delimiters (/, -, .) require 'pl.coalesce' with multiple 'str.to_date' format strings. "
-        "   - Example: pl.coalesce([pl.col('c').str.to_date('%Y-%m-%d', strict=False), "
-        "                          pl.col('c').str.to_date('%m/%d/%Y', strict=False)])"
-
-        "\n\n--- OUTPUT FORMAT ---"
-        "You must return ONLY a JSON object. Do not include tool tags like <function>."
-        "{"
-        "  'explanation': 'Briefly describe why the previous cast failed and how you fixed it.',"
-        "  'python_code': 'The valid Polars expression (e.g., pl.col(...)...)'"
-        "}"
+        "You are a data normalization agent. "
+        "Return ONLY a valid JSON object matching the DataRepair schema. "
+        "Do not use function-call syntax, do not add introductory text. "
+        "1. For DATE columns: Convert any format to ISO 8601 'YYYY-MM-DD'. "
+        "If this is a date column, prioritize using pl.to_datetime or pl.strptime logic. Return a regex only if a standard string replace can fully normalize the date format to YYYY-MM-DD."
+        "This data uses the US format: MONTH/DAY/YEAR."
+        "2. For NUMERIC columns: Convert any currency/format to a clean float string '1234.56'. If it cannot be fixed, return None instead of 0"
+        )
     )
-)
-
-# Register the validation tool
-data_fix_agent.tool(test_polars_expression)

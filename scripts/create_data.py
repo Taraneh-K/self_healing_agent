@@ -21,10 +21,7 @@ def generate_dirty_data():
         r_cost = random.random()
         num = random.uniform(100, 2000)
         
-        if r_cost > 0.85:
-            # European format (comma as decimal: "1.234,50")
-            cost = f"{num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        elif r_cost > 0.75:
+        if r_cost > 0.75:
             # Human noise
             cost = f"Price: {num:.2f}"
         elif r_cost > 0.65:
