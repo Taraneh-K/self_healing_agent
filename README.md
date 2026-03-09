@@ -72,7 +72,7 @@ This project served as an intensive experiment in applying Agentic AI directly t
 
 - The "Long Prompt" Trap: Early iterations used long system prompts attempting to cover every edge case. This proved to be overkill. The model often ignored specific instructions when the context window became too cluttered, leading to inconsistent reasoning. Keep it focused: Break tasks into granular, type-specific prompts.
 
-- The Power of Structural Clustering: Trying to "fix everything at once" is a recipe for failure. By converting raw data into structural "blueprints" (e.g., YYYY-DD-DD vs DD-DD-YYYY) before sending it to the LLM, we achieved much higher accuracy. Clustering provides the AI with the specific structural context it needs to make correct, predictable transformations.
+- The Power of Structural Clustering: Instead of sending every single row to the LLM—which would be prohibitively expensive and prone to hallucinations, we first group data into structural "blueprints" using regex abstraction. By only sending a representative sample of each unique pattern to the AI, we drastically reduce token consumption and latency while providing the model with clear, consistent context. This targeted approach transforms the task from an inefficient row-by-row guessing game into a scalable, high-accuracy mapping process.
 
 - Model Performance & Ambiguity: Throughout testing, different models exhibited varying levels of "instruction following." While some models handled currency reasonably well, they often "flipped" dates (e.g., interpreting 01/10 as October 1st instead of January 10th). It was necessary to give a hint for that in the system prompt.
 
