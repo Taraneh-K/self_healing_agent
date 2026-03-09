@@ -61,3 +61,8 @@ This project is an automated, LLM-powered data cleaning pipeline built with Pola
     Repair: For each pattern, the AI agent is sent a sample of the data and tasked with creating a regex mapping to the target format.
 
     Final Cast: The pipeline applies the discovered regexes and performs a final type cast to pl.Float64 or pl.Date, with strict=False to safely handle any remaining anomalies.
+
+## Sample of Logfire log
+
+<img width="1748" height="755" alt="image" src="https://github.com/user-attachments/assets/c1ef88bf-3224-4677-ade2-c3203cbf1e66" />
+
