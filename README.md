@@ -9,7 +9,11 @@ This project is an automated, LLM-powered data cleaning pipeline built with Pola
 
 - Conditional Logic: Differentiates between numeric and date processing to apply the most effective clustering strategy for each data type.
 
-- Observability: Integrated with Logfire to trace pattern detection, AI reasoning, and individual row transformations.
+- Observability: Integrated with Logfire to trace pattern detection, AI reasoning, and individual row transformations. Implemented spans and attributes to provide observability into the time each step takes, the number of each pattern existing in data, the AI fix and comparing the number of rows with that pattern with the number of rows being affected by the fix.
+
+## Sample of Logfire log
+
+<img width="1748" height="755" alt="image" src="https://github.com/user-attachments/assets/c1ef88bf-3224-4677-ade2-c3203cbf1e66" />
 
 ## Project Structure
 
@@ -62,9 +66,7 @@ This project is an automated, LLM-powered data cleaning pipeline built with Pola
 
 4. Final Cast: The pipeline applies the discovered regexes and performs a final type cast to pl.Float64 or pl.Date, with strict=False to safely handle any remaining anomalies.
 
-## Sample of Logfire log
 
-<img width="1748" height="755" alt="image" src="https://github.com/user-attachments/assets/c1ef88bf-3224-4677-ade2-c3203cbf1e66" />
 
 # Key Learnings & Takeaways
 
