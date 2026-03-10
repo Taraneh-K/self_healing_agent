@@ -7,7 +7,7 @@ This project is an automated, LLM-powered data cleaning pipeline built with Pola
 
 - AI-Driven Healing: Uses Llama-3.3 to analyze samples from these clusters and generate regex normalization rules that map diverse input formats to standardized outputs (YYYY-MM-DD for dates, 1234.56 for costs).
 
-- Conditional Logic: Differentiates between numeric and date processing to apply the most effective cluiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii__________tering strategy for each data type.
+- Conditional Logic: Differentiates between numeric and date processing to apply the most effective clustering strategy for each data type.
 
 - Observability: Integrated with Logfire to trace pattern detection, AI reasoning, and individual row transformations.
 
